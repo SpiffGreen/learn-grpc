@@ -1,11 +1,10 @@
 syntax = "proto3";
-option go_package = "github.com/spiffgreen/learn-grpc/learn";
-
-package learn;
+option go_package = "shared/learn";
 
 service HelloApp {
     rpc GetUser(UserRequest) returns (User) {}
     rpc GetUsers(EmptyMessage) returns (stream User) {}
+    rpc GetUsersNoStream(EmptyMessage) returns (GetUsersRsponse) {}
 }
 
 message UserRequest {
@@ -18,4 +17,8 @@ message User {
     uint32 id = 1;
     string name = 2;
     uint32 age = 3;
+}
+
+message GetUsersRsponse {
+    repeated User users = 1;
 }

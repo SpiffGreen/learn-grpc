@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v4.25.3
-// source: learn/learn.proto
+// source: learn.proto
 
 package learn
 
@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	HelloApp_GetUser_FullMethodName  = "/learn.HelloApp/GetUser"
-	HelloApp_GetUsers_FullMethodName = "/learn.HelloApp/GetUsers"
+	HelloApp_GetUser_FullMethodName          = "/HelloApp/GetUser"
+	HelloApp_GetUsers_FullMethodName         = "/HelloApp/GetUsers"
+	HelloApp_GetUsersNoStream_FullMethodName = "/HelloApp/GetUsersNoStream"
 )
 
 // HelloAppClient is the client API for HelloApp service.
@@ -29,6 +30,7 @@ const (
 type HelloAppClient interface {
 	GetUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*User, error)
 	GetUsers(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (grpc.ServerStreamingClient[User], error)
+	GetUsersNoStream(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (*GetUsersRsponse, error)
 }
 
 type helloAppClient struct {
@@ -68,12 +70,23 @@ func (c *helloAppClient) GetUsers(ctx context.Context, in *EmptyMessage, opts ..
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type HelloApp_GetUsersClient = grpc.ServerStreamingClient[User]
 
+func (c *helloAppClient) GetUsersNoStream(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (*GetUsersRsponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUsersRsponse)
+	err := c.cc.Invoke(ctx, HelloApp_GetUsersNoStream_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HelloAppServer is the server API for HelloApp service.
 // All implementations must embed UnimplementedHelloAppServer
 // for forward compatibility.
 type HelloAppServer interface {
 	GetUser(context.Context, *UserRequest) (*User, error)
 	GetUsers(*EmptyMessage, grpc.ServerStreamingServer[User]) error
+	GetUsersNoStream(context.Context, *EmptyMessage) (*GetUsersRsponse, error)
 	mustEmbedUnimplementedHelloAppServer()
 }
 
@@ -89,6 +102,9 @@ func (UnimplementedHelloAppServer) GetUser(context.Context, *UserRequest) (*User
 }
 func (UnimplementedHelloAppServer) GetUsers(*EmptyMessage, grpc.ServerStreamingServer[User]) error {
 	return status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
+}
+func (UnimplementedHelloAppServer) GetUsersNoStream(context.Context, *EmptyMessage) (*GetUsersRsponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsersNoStream not implemented")
 }
 func (UnimplementedHelloAppServer) mustEmbedUnimplementedHelloAppServer() {}
 func (UnimplementedHelloAppServer) testEmbeddedByValue()                  {}
@@ -140,16 +156,38 @@ func _HelloApp_GetUsers_Handler(srv interface{}, stream grpc.ServerStream) error
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type HelloApp_GetUsersServer = grpc.ServerStreamingServer[User]
 
+func _HelloApp_GetUsersNoStream_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EmptyMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HelloAppServer).GetUsersNoStream(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HelloApp_GetUsersNoStream_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HelloAppServer).GetUsersNoStream(ctx, req.(*EmptyMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HelloApp_ServiceDesc is the grpc.ServiceDesc for HelloApp service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var HelloApp_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "learn.HelloApp",
+	ServiceName: "HelloApp",
 	HandlerType: (*HelloAppServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetUser",
 			Handler:    _HelloApp_GetUser_Handler,
+		},
+		{
+			MethodName: "GetUsersNoStream",
+			Handler:    _HelloApp_GetUsersNoStream_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
@@ -159,5 +197,5 @@ var HelloApp_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "learn/learn.proto",
+	Metadata: "learn.proto",
 }

@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 
-	pb "github.com/spiffgreen/learn-grpc/learn"
+	pb "github.com/spiffgreen/learn-grpc/shared/genproto/learn"
 )
 
 type HelloApp struct {
@@ -36,9 +37,28 @@ func (h HelloApp) GetUsers(_ *pb.EmptyMessage, srv pb.HelloApp_GetUsersServer) e
 
 	for _, user := range users {
 		if err := srv.Send(user); err != nil {
-			log.Println("error generating response", user)
+			fmt.Println("error generating response", user)
 		}
 	}
 
 	return nil
+}
+
+func (h HelloApp) GetUsersNoStream(_ context.Context, input *pb.EmptyMessage) (*pb.GetUsersRsponse, error) {
+	users := []*pb.User{
+		{
+			Id:   1,
+			Name: "Spiff Jekey-Green",
+			Age:  23,
+		},
+		{
+			Id:   2,
+			Name: "John Doe",
+			Age:  30,
+		},
+	}
+
+	return &pb.GetUsersRsponse{
+		Users: users,
+	}, nil
 }

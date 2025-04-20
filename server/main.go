@@ -4,7 +4,7 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/spiffgreen/learn-grpc/learn"
+	pb "github.com/spiffgreen/learn-grpc/shared/genproto/learn"
 	"google.golang.org/grpc"
 )
 
